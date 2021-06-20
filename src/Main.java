@@ -21,39 +21,62 @@ enum TileOccupation {
 public class Main extends Application {
     Integer width = 800;
     Integer height = 1000;
-    Integer radius = 40;
+    Integer cellWidth = 40;
+    Integer cellHeight = 40;
+    Integer[] cellStart = new Integer[]{40,40};
     Canvas canvas;
     GraphicsContext graphicsContext;
-    BoardController<TileOccupation> boardController = new BoardController<TileOccupation>(TileOccupation.EMPTY,10,10, radius);
+    BoardController boardController = new BoardController(TileOccupation.EMPTY,10,10);
+     
     Boolean isWhite = true;
+    Boolean isAI = false;
+    Boolean isMultiplayer = false;
+    TileOccupation playerColor = TileOccupation.WHITE;
     @Override
     public void start(Stage stage) throws Exception {
+        if (this.isMultiplayer){
+
+        }
         Pane pane = new Pane();
         this.canvas = new Canvas();
         boardController.setCell(4,4,TileOccupation.BLACK);
         boardController.setCell(5,4,TileOccupation.WHITE);
         boardController.setCell(4,5,TileOccupation.WHITE);
         boardController.setCell(5,5,TileOccupation.BLACK);
+
         canvas.setHeight(height);
-
         canvas.setWidth(width);
-        graphicsContext = canvas.getGraphicsContext2D();
-        graphicsContext.setFill(Color.WHEAT);
 
-        drawGrid();
+        graphicsContext = canvas.getGraphicsContext2D();
+
+        drawGrid(Color.DARKGREEN);
 
         canvas.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
                 Double doubleX = mouseEvent.getX();
                 Double doubleY = mouseEvent.getY();
-                Integer index = resolveClick(doubleX.intValue(), doubleY.intValue());
-                Integer[] pos = boardController.indexToPos(index);
-                TileOccupation t = (isWhite) ? TileOccupation.WHITE : TileOccupation.BLACK;
-                if (GameController.checkMove(boardController,t,pos)){
-                    boardController.setCell(index,t);
-                    isWhite = !isWhite;
-                    drawGrid();
+                Integer[] index = resolveClick(doubleX.intValue(), doubleY.intValue());
+                TileOccupation[][] data = (TileOccupation[][]) boardController.getData();
+                if (GameController.isInsideBound((TileOccupation[][]) data, index)) {
+                    TileOccupation t = (isWhite) ? TileOccupation.WHITE : TileOccupation.BLACK;
+                    if (GameController.checkMove(boardController, t, index)) {
+                        System.out.println(index[0]);
+                        System.out.println(index[1]);
+                        boardController.setCell(index[0], index[1], t);
+                        isWhite = !isWhite;
+                        drawGrid(Color.GREEN);
+                        if (isAI){
+                            //Gets AI Move
+                            isWhite = !isWhite;
+                            drawGrid(Color.GREEN);
+                        }
+                        else if (isMultiplayer){
+                            // Gets Other players move
+                            isWhite = !isWhite;
+                            drawGrid(Color.GREEN);
+                        }
+                    }
                 }
             }
         });
@@ -63,71 +86,34 @@ public class Main extends Application {
         stage.show();
     }
 
-    public Integer resolveClick(Integer x, Integer y){
+    public Integer[] resolveClick(Integer x, Integer y){
         Integer[] pos = new Integer[]{x,y};
-        Integer[][] cells = boardController.getCellsPos();
-        Integer closestIndex = 0;
-        Integer distance = MathToolkit.euclidDistance(pos, cells[closestIndex]);
-        for (int i = 0; i < cells.length; i++){
-            Integer nDistance = MathToolkit.euclidDistance(pos, cells[i]);
-            if (nDistance < distance){
-                closestIndex = i;
-                distance = nDistance;
+        Integer[] reducedPos = new Integer[]{(x-cellStart[0])/cellWidth, (y-cellStart[1])/cellHeight};
+        return reducedPos;
+    }
+
+
+    public void drawGrid(Paint paint){
+        graphicsContext.setFill(Color.LIMEGREEN);
+        graphicsContext.fillRect(0,0,canvas.getWidth(),canvas.getHeight());
+        graphicsContext.setStroke(paint);
+        for (int x = 0; x< boardController.getWidth(); x++){
+            for (int y = 0; y< boardController.getHeight(); y++){
+                int xStart = cellStart[0] + (x*cellWidth);
+                int yStart = cellStart[1] + (y*cellHeight);
+                graphicsContext.strokeRect(xStart, yStart,cellWidth, cellHeight);
+                if (boardController.getCell(x,y) != TileOccupation.EMPTY){
+                    if (boardController.getCell(x,y) == TileOccupation.BLACK){
+                        graphicsContext.setFill(Color.BLACK);
+                        graphicsContext.fillOval(xStart,yStart,cellWidth,cellHeight);
+                    }
+                    else {
+                        graphicsContext.setFill(Color.WHITE);
+                        graphicsContext.fillOval(xStart,yStart,cellWidth,cellHeight);
+                    }
+                }
             }
         }
-        return closestIndex;
-    }
-
-
-    public void drawGrid(){
-        graphicsContext.setFill(Color.FORESTGREEN);
-        graphicsContext.fillRect(0,0,canvas.getWidth(),canvas.getHeight());
-        Integer[][] cells = boardController.getCellsPos();
-        for (int i = 0; i < cells.length; i++){
-            drawHexagon(cells[i], radius, Color.GREEN,boardController.getCell(i));
-            graphicsContext.setStroke(Color.BLUE);
-            Integer[] pos = boardController.indexToPos(i);
-            String msg = "("+String.valueOf(pos[1])+","+String.valueOf(pos[0])+")";
-            graphicsContext.strokeText(msg,cells[i][0],cells[i][1]);
-        }
-    }
-
-    public void drawHexagon(Integer[] centerPos, Integer radius, Paint stroke, TileOccupation isFill){
-        graphicsContext.setStroke(stroke);
-
-        Double bearing = Math.PI/6;
-        Integer[][] points = new Integer[6][];
-        for (int i = 0; i < 6; i++){
-            points[i] = posFromPoint(centerPos, radius,bearing);
-            bearing = bearing +( Math.PI/3);
-        }
-        double[] xs = new double[points.length];
-        double[] ys = new double[points.length];
-        for (int b = 0; b < xs.length; b++){
-            xs[b] = points[b][0];
-            ys[b] = points[b][1];
-        }
-        if (isFill == TileOccupation.EMPTY) {
-            graphicsContext.setFill(Color.GREEN);
-            graphicsContext.fillPolygon(xs, ys, 6);
-        }
-        else if (isFill == TileOccupation.BLACK){
-            graphicsContext.setFill(Color.BLACK);
-            graphicsContext.fillPolygon(xs, ys, 6);
-        }
-        else if (isFill == TileOccupation.WHITE){
-            graphicsContext.setFill(Color.WHITE);
-            graphicsContext.fillPolygon(xs, ys, 6);
-        }
-
-        graphicsContext.strokePolygon(xs,ys,6);
-
-    }
-
-    public Integer[] posFromPoint(Integer[] point, Integer radius, Double bearing){
-        Double x = radius * Math.cos(bearing) + point[0];
-        Double y = radius * Math.sin(bearing) + point[1];
-        return new Integer[]{x.intValue(),y.intValue()};
     }
 
     public static void main(String[] args){

@@ -11,7 +11,7 @@ public class MathToolkit {
         }
         return c;
     }
-    public static Integer[] scale(Integer scalar, Double[] a){
+    public static Integer[] scale(Integer scalar, Integer[] a){
         Integer[] b = new Integer[a.length];
         for (int i = 0; i < a.length; i++){
             Double t = a[i] * scalar.doubleValue();
@@ -19,6 +19,4 @@ public class MathToolkit {
         }
         return b;
     }
-
-    public static Double singleDistance
 }
