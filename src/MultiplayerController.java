@@ -16,11 +16,11 @@ public class MultiplayerController {
             NetworkHelper.write("HOST",matchingSocket.getOutputStream());
             String msg = NetworkHelper.msgRead(matchingSocket.getInputStream());
             String[] args = msg.split(" ");
-            if (args[0] == "ROOM"){
+            if (args[0].equals("ROOM")){
                 Integer roomPort = Integer.valueOf(args[1]);
                 this.socket = new Socket(inet4Address, roomPort);
                 String replyMsg = NetworkHelper.msgRead(this.socket.getInputStream());
-                if (replyMsg == "HOST"){
+                if (replyMsg.equals("HOST")){
                     isHost = true;
                     canMove = true;
                 }
@@ -35,11 +35,13 @@ public class MultiplayerController {
             NetworkHelper.write("CLIENT", matchingSocket.getOutputStream());
             String msg = NetworkHelper.msgRead(matchingSocket.getInputStream());
             String[] args = msg.split(" ");
-            if (args[0] == "ROOMS"){
+            System.out.println(args[0]);
+            if (args[0].equals("ROOMS")){
                 Integer roomPort = getPort(Arrays.copyOfRange(args, 1, args.length));
                 this.socket = new Socket(inet4Address, roomPort);
+                System.out.println(roomPort.intValue());
                 String replyMsg = NetworkHelper.msgRead(socket.getInputStream());
-                if (replyMsg == "HOST"){
+                if (replyMsg.equals("HOST")){
                     isHost = true;
                     canMove = true;
                 }

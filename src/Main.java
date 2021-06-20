@@ -1,3 +1,4 @@
+import com.sun.org.apache.xpath.internal.operations.Mult;
 import com.sun.webkit.graphics.GraphicsDecoder;
 import javafx.application.Application;
 import javafx.event.Event;
@@ -13,6 +14,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 
+import java.net.Inet4Address;
+import java.net.InetAddress;
+
 enum TileOccupation {
     WHITE, BLACK, EMPTY;
 }
@@ -25,12 +29,13 @@ public class Main extends Application {
     Integer cellHeight = 40;
     Integer[] cellStart = new Integer[]{40,40};
     Canvas canvas;
+    MultiplayerController multiplayerController;
+    MultiplayerController multiplayerController2;
     GraphicsContext graphicsContext;
     BoardController boardController = new BoardController(TileOccupation.EMPTY,10,10);
-     
     Boolean isWhite = true;
     Boolean isAI = false;
-    Boolean isMultiplayer = false;
+    Boolean isMultiplayer = true;
     TileOccupation playerColor = TileOccupation.WHITE;
     @Override
     public void start(Stage stage) throws Exception {
@@ -80,6 +85,7 @@ public class Main extends Application {
                 }
             }
         });
+        multiplayerController = new MultiplayerController(true,(Inet4Address) Inet4Address.getByName("176.58.104.92"),1700);
         pane.getChildren().add(canvas);
         Scene scene = new Scene(pane);
         stage.setScene(scene);
